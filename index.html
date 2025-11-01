@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Twitch Viewer Count</title>
+    <link
+      rel="icon"
+      type="img/png"
+      href="IMG Ordner/Website Icon Ordner/Twitch Logo Website Icon.png"
+    />
+    <link rel="stylesheet" href="twitch-viewer-count.css" />
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/@streamerbot/client/dist/streamerbot-client.js"
+    ></script>
+    <script type="module" defer src="twitch-viewer-count.js"></script>
+  </head>
+  <body>
+    <div id="mainContainerId" class="main-container">
+      <div id="subContainerId" class="sub-container">
+        <div id="twitchLogoImgContainerId" class="twitch-logo-img-container">
+          <img
+            width="462"
+            height="540"
+            id="twitchImgLogoId"
+            src="IMG Ordner/Logo IMG Ordner/Twitch Logo Icon.png"
+            alt="Twitch Logo Icon"
+            class="twitch-img-logo"
+            loading="eager"
+          />
+        </div>
+        <div
+          id="twitchViewerCountContainerId"
+          class="twitch-viewer-count-container"
+        >
+          <h1 id="twitchViewerCountId" class="twitch-viewer-count"></h1>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

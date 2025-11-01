@@ -1,0 +1,246 @@
+:root {
+  --font-family-var: "Roboto-Bold", Helvetica, sans-serif;
+  --background-color-var: rgba(0, 0, 0, 0);
+  --border-color-var: rgba(0, 0, 0, 0);
+  --border-var: 1px solid var(--border-color-var);
+  --padding-block-inline-var: 5px 5px;
+  --margin-top-left-bottom-right-var: 5px 5px 5px 5px;
+  --box-shadow-color-1-var: rgba(0, 255, 255, 0.8);
+  --box-shadow-color-2-var: rgba(50, 205, 50, 0.9);
+}
+
+@font-face {
+  font-family: "Roboto-Bold";
+  src: local("/Roboto/Roboto-Bold.woff2") url("/Roboto/Roboto-Bold.woff2")
+    format("woff2");
+  font-weight: normal, bold;
+  font-style: normal;
+  font-display: swap;
+  font-variant: normal;
+}
+
+* {
+  font-family: var(--font-family-var);
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-var);
+  background: var(--background-color-var);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden hidden;
+  margin: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+.main-container {
+  background: var(--background-color-var);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-items: center;
+  justify-content: center;
+  border: var(--border-var);
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.sub-container {
+  background: rgb(0, 0, 0);
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.999));
+  width: 600px;
+  height: 800px;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 2px solid rgb(0, 0, 0);
+  border-radius: 50px;
+  padding: 25px 25px;
+  margin: 12.5px 12.5px 12.5px 12.5px;
+  box-shadow: 2px 2px 2px 2px var(--box-shadow-color-2-var),
+    0px 0px 0px 2px var(--box-shadow-color-1-var),
+    0px 0px 0px 2px var(--box-shadow-color-1-var);
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.twitch-logo-img-container {
+  background: var(--background-color-var);
+  width: 484px;
+  height: 560px;
+  transform: scale(0.8);
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-items: center;
+  justify-content: center;
+  border: var(--border-var);
+  padding: var(--padding-block-inline-var);
+  margin: var(--margin-top-left-bottom-right-var);
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.twitch-img-logo {
+  background: var(--background-color-var) blur(10px);
+  filter: grayscale(0.5%) brightness(95%) blur(0px) contrast(150%)
+    drop-shadow(0 0 50px rgb(102, 0, 255));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  width: 100%;
+  max-width: 462px;
+  height: 100%;
+  max-height: 540px;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-items: center;
+  justify-content: center;
+  border: var(--border-var);
+  padding: var(--padding-block-inline-var);
+  margin: var(--margin-top-left-bottom-right-var);
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.twitch-img-logo[alt="Twitch Logo Icon"] {
+  background: var(--background-color-var) blur(0px);
+  filter: grayscale(0%) brightness(100%) blur(0px) contrast(100%)
+    drop-shadow(0 0 50px rgb(102, 0, 255));
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+  width: 462px;
+  height: 540px;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-items: center;
+  justify-content: center;
+  border: var(--border-var);
+  padding: var(--padding-block-inline-var);
+  margin: var(--margin-top-left-bottom-right-var);
+  text-align: center;
+  font-size: 50px;
+  color: rgb(255, 255, 255);
+  text-decoration: none;
+}
+
+.twitch-viewer-count-container {
+  background: var(--background-color-var);
+  width: 370px;
+  height: 170px;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-items: center;
+  justify-content: center;
+  border: var(--border-var);
+  padding: var(--padding-block-inline-var);
+  margin: var(--margin-top-left-bottom-right-var);
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.twitch-viewer-count {
+  background: var(--background-color-var) blur(10px);
+  filter: blur(0px) drop-shadow(0 0 50px rgb(102, 0, 255));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  width: 350px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-items: center;
+  justify-content: center;
+  border: var(--border-var);
+  padding: var(--padding-block-inline-var);
+  margin: var(--margin-top-left-bottom-right-var);
+  text-align: center;
+  font-size: 50px;
+  color: rgb(255, 255, 255);
+  text-decoration: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+  position: relative;
+}
+
+.text-underline {
+  position: relative;
+}
+
+.text-underline::after {
+  content: "";
+  background: linear-gradient(145deg, rgb(0, 255, 255), rgb(102, 0, 255) 100%);
+  filter: grayscale(0.5%) brightness(90%) blur(1.5px) contrast(90%)
+    drop-shadow(0 0 2px rgb(0, 0, 0));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  border: var(--border-var);
+  border-radius: 50px;
+  padding: 0px 0px;
+  margin: auto;
+  transform: scaleX(1);
+  transform-origin: center;
+}
+
+@keyframes fade-in {
+  0% {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  100% {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  0% {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  100% {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
