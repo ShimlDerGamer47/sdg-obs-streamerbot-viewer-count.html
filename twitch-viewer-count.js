@@ -2,19 +2,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const html = document.documentElement;
   const params = new URLSearchParams(window.location.search);
 
-  let viewerNumber = params.get("viewerNumber");
-  const delay = parseInt(params.get("delay"), 10) || 2000;
+  let viewerNumberParam = params.get("viewerNumber");
+  let viewerNumber =
+    viewerNumberParam != null ? String(viewerNumberParam) : null;
 
-  let client;
+  const delay = Number.isFinite(parseInt(params.get("delay"), 10))
+    ? parseInt(params.get("delay"), 10)
+    : 5000;
+
+  const initialDelay = Number.isFinite(parseInt(params.get("initialDelay"), 10))
+    ? parseInt(params.get("initialDelay"), 10)
+    : 500;
+
+  let client = null;
   try {
-    client = new StreamerbotClient({
-      host: "127.0.0.1",
-      port: 8080,
-      endpoint: "/",
-      subscribe: {},
-    });
+    if (typeof StreamerbotClient !== "undefined") {
+      client = new StreamerbotClient({
+        host: "127.0.0.1",
+        port: 8080,
+        endpoint: "/",
+        subscribe: {},
+      });
+    }
   } catch (error) {
-    console.log("Streamer.bot nicht verbunden:", error);
+    console.warn("Streamer.bot-Client nicht verfügbar:", error);
+    client = null;
   }
 
   const fontFamilyVar = "--font-family-var";
@@ -27,35 +39,187 @@ document.addEventListener("DOMContentLoaded", () => {
     .getPropertyValue(rootBackgroundColorVar)
     .trim();
 
-  const rootBorderColorVar = "--border-color-var";
-  const cssBorderColor = getComputedStyle(html)
-    .getPropertyValue(rootBorderColorVar)
-    .trim();
-
   const rootBorderVar = "--border-var";
   const cssBorder = getComputedStyle(html)
     .getPropertyValue(rootBorderVar)
     .trim();
 
+  const rootBorderColorVar = "--border-color-var";
+  const cssBorderColor = getComputedStyle(html)
+    .getPropertyValue(rootBorderColorVar)
+    .trim();
+
   const body = document.body;
+  const mainDiv = document.getElementById("mainContainerId");
+  const subDiv = document.getElementById("subContainerId");
+  const twitchLogoImgDiv = document.getElementById("twitchLogoImgContainerId");
+  const twitchImgLogo = document.getElementById("twitchImgLogoId");
+  const twitchViewerCountDiv = document.getElementById(
+    "twitchViewerCountContainerId"
+  );
+  const twitchViewerCountHone = document.getElementById("twitchViewerCountId");
 
-  const timer = 750;
-  const animationFadeIn = `fade-in ${timer}ms cubic-bezier(.2,.9,.2,1) forwards`;
-  const animationFadeOut = `fade-out ${timer}ms cubic-bezier(.2,.9,.2,1) forwards`;
-  const transitionProperty = `animation ${timer}ms cubic-bezier(.2,.9,.2,1), visibility ${timer}ms cubic-bezier(.2,.9,.2,1), opacity ${timer}ms cubic-bezier(.2,.9,.2,1)`;
-  const hidden = "hidden";
-  const visible = "visible";
-  const zeroNumber = 0;
-  const oneNumber = 1;
-  const none = "none";
+  if (
+    !mainDiv ||
+    !subDiv ||
+    !twitchLogoImgDiv ||
+    !twitchImgLogo ||
+    !twitchViewerCountDiv ||
+    !twitchViewerCountHone
+  ) {
+    console.error(
+      "Required DOM elements missing. Aborting viewer count script."
+    );
 
-  const initialDelayParam = parseInt(params.get("initialDelay"), 10);
-  const initialDelay = Number.isFinite(initialDelayParam)
-    ? initialDelayParam
-    : 500;
+    return;
+  }
 
-  function bodyMorePropertyToken() {
+  function htmlSecurityToken() {
+    const elementArray = [
+      mainDiv,
+      twitchLogoImgDiv,
+      twitchImgLogo,
+      twitchViewerCountDiv,
+      twitchViewerCountHone,
+    ];
+
     const eventArray = ["copy", "dragstart", "keydown", "select"];
+
+    const dataStyle = {
+      fontFamily: robotoBold,
+      border: cssBorder || `1px solid ${cssBorderColor}`,
+      WebkitUserSelect: "none",
+      userSelect: "none",
+      cursor: "default",
+      pointerEvents: "none",
+    };
+
+    elementArray.forEach((element) => {
+      if (!element) return;
+
+      eventArray.forEach((event) => {
+        if (!event) return;
+
+        element.addEventListener(event, (e) => e.preventDefault());
+      });
+
+      Object.assign(element.style, dataStyle);
+    });
+
+    const changeDataStyle = {
+      fontFamily: robotoBold,
+      WebkitUserSelect: "none",
+      userSelect: "none",
+      cursor: "default",
+      pointerEvents: "none",
+    };
+
+    eventArray.forEach((event) => {
+      if (!event) return;
+
+      subDiv.addEventListener(event, (e) => e.preventDefault());
+    });
+
+    Object.assign(subDiv.style, changeDataStyle);
+  }
+  htmlSecurityToken();
+
+  function noop() {}
+  function debounce(fn, wait = 80) {
+    let t;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), wait);
+    };
+  }
+
+  function getBaseFontSizePx(el) {
+    const fs = getComputedStyle(el).fontSize;
+    const n = parseFloat(fs);
+
+    return Number.isFinite(n) ? n : 50;
+  }
+
+  function copyImportantTextStyles(sourceEl, targetEl) {
+    const cs = getComputedStyle(sourceEl);
+    targetEl.style.fontFamily = cs.fontFamily;
+    targetEl.style.fontWeight = cs.fontWeight;
+    targetEl.style.letterSpacing = cs.letterSpacing;
+    targetEl.style.whiteSpace = "normal";
+    targetEl.style.lineHeight = cs.lineHeight;
+    targetEl.style.textTransform = cs.textTransform;
+    targetEl.style.padding = "0";
+    targetEl.style.margin = "0";
+    targetEl.style.boxSizing = "border-box";
+  }
+
+  function adjustFontSizeToFit() {
+    try {
+      if (!twitchViewerCountHone || !twitchViewerCountDiv) return;
+
+      const baseFontSize = getBaseFontSizePx(twitchViewerCountHone);
+      const meas = document.createElement("div");
+      meas.innerHTML = twitchViewerCountHone.innerHTML || "";
+      copyImportantTextStyles(twitchViewerCountHone, meas);
+
+      meas.style.position = "absolute";
+      meas.style.visibility = "hidden";
+      meas.style.left = "-9999px";
+      meas.style.top = "-9999px";
+      meas.style.width = "auto";
+      meas.style.height = "auto";
+      meas.style.whiteSpace = "normal";
+      meas.style.display = "inline-block";
+      meas.style.fontSize = `${baseFontSize}px`;
+
+      document.body.appendChild(meas);
+
+      const containerWidth =
+        twitchViewerCountDiv.clientWidth ||
+        twitchViewerCountDiv.offsetWidth ||
+        350;
+      const containerHeight =
+        twitchViewerCountDiv.clientHeight ||
+        twitchViewerCountDiv.offsetHeight ||
+        150;
+
+      const measuredWidth = meas.scrollWidth;
+      meas.style.width = `${containerWidth}px`;
+      const measuredHeight = meas.scrollHeight;
+
+      const scaleX = measuredWidth > 0 ? containerWidth / measuredWidth : 1;
+      const scaleY = measuredHeight > 0 ? containerHeight / measuredHeight : 1;
+      const scale = Math.min(scaleX, scaleY, 1);
+
+      const finalFontSize = Math.max(8, Math.floor(baseFontSize * scale));
+
+      twitchViewerCountHone.style.fontSize = `${finalFontSize}px`;
+      twitchViewerCountHone.style.lineHeight = "1.05";
+
+      document.body.removeChild(meas);
+    } catch (e) {
+      console.warn("adjustFontSizeToFit failed:", e);
+    }
+  }
+
+  const adjustFontSizeToFitDebounced = debounce(adjustFontSizeToFit, 80);
+
+  if (window.ResizeObserver) {
+    try {
+      const ro = new ResizeObserver(adjustFontSizeToFitDebounced);
+
+      ro.observe(twitchViewerCountDiv);
+      ro.observe(subDiv);
+    } catch (e) {
+      window.addEventListener("resize", adjustFontSizeToFitDebounced);
+    }
+  } else {
+    window.addEventListener("resize", adjustFontSizeToFitDebounced);
+  }
+
+  (function bodyMorePropertyToken() {
+    const eventArray = ["copy", "dragstart", "keydown", "select"];
+
     eventArray.forEach((event) =>
       body.addEventListener(event, (e) => e.preventDefault())
     );
@@ -74,338 +238,163 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     Object.assign(body.style, dataStyle);
-  }
-  bodyMorePropertyToken();
-
-  const $ = (id) => document.getElementById(id);
-
-  const mainDiv = $("mainContainerId");
-  const subDiv = $("subContainerId");
-  const twitchLogoImgDiv = $("twitchLogoImgContainerId");
-  const twitchImgLogo = $("twitchImgLogoId");
-  const twitchViewerCountDiv = $("twitchViewerCountContainerId");
-  const twitchViewerCountHone = $("twitchViewerCountId");
-
-  twitchViewerCountHone.innerText = "";
-  twitchViewerCountHone.classList.remove("text-underline");
+  })();
 
   [subDiv, twitchLogoImgDiv, twitchViewerCountDiv].forEach((el) => {
-    if (!el) return;
-    el.style.visibility = hidden;
-    el.style.opacity = zeroNumber;
-    el.style.animation = none;
-    el.style.transition = none;
+    el.style.visibility = "hidden";
+    el.style.opacity = 0;
+    el.style.pointerEvents = "none";
   });
 
-  function debounce(fn, wait = 80) {
-    let t;
-    return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), wait);
-    };
+  let animationRunning = false;
+
+  function animateElement(el, keyframes, options) {
+    return new Promise((resolve) => {
+      try {
+        const anim = el.animate(keyframes, options);
+        anim.onfinish = () => {
+          if (options && options.fill === "forwards" && keyframes.length > 0) {
+            const last = keyframes[keyframes.length - 1];
+
+            Object.assign(el.style, last);
+          }
+          resolve();
+        };
+
+        setTimeout(
+          () => {
+            resolve();
+          },
+          options && options.duration ? options.duration + 40 : 300
+        );
+      } catch (e) {
+        if (keyframes && keyframes.length) {
+          const last = keyframes[keyframes.length - 1];
+          try {
+            Object.assign(el.style, last);
+          } catch (__) {}
+        }
+
+        setTimeout(resolve, 40);
+      }
+    });
   }
 
-  function getBaseFontSizePx(el) {
-    const fs = getComputedStyle(el).fontSize;
-    const n = parseFloat(fs);
-    return Number.isFinite(n) ? n : 50;
-  }
+  async function runAnimationSequence() {
+    if (animationRunning) return;
+    animationRunning = true;
 
-  function copyImportantTextStyles(sourceEl, targetEl) {
-    const cs = getComputedStyle(sourceEl);
-    targetEl.style.fontFamily = cs.fontFamily;
-    targetEl.style.fontWeight = cs.fontWeight;
-    targetEl.style.letterSpacing = cs.letterSpacing;
-    targetEl.style.whiteSpace = "normal";
-    targetEl.style.lineHeight = cs.lineHeight;
-    targetEl.style.textTransform = cs.textTransform;
-    targetEl.style.padding = "0";
-    targetEl.style.margin = "0";
-    targetEl.style.boxSizing = "border-box";
-  }
-
-  function adjustFontSizeToFit() {
-    if (!twitchViewerCountHone || !twitchViewerCountDiv) return;
-
-    const baseFontSize = getBaseFontSizePx(twitchViewerCountHone);
-    const meas = document.createElement("div");
-    meas.innerHTML = twitchViewerCountHone.innerHTML || "";
-    copyImportantTextStyles(twitchViewerCountHone, meas);
-
-    meas.style.position = "absolute";
-    meas.style.visibility = "hidden";
-    meas.style.left = "-9999px";
-    meas.style.top = "-9999px";
-    meas.style.width = "auto";
-    meas.style.height = "auto";
-    meas.style.whiteSpace = "normal";
-    meas.style.display = "inline-block";
-    meas.style.fontSize = `${baseFontSize}px`;
-
-    document.body.appendChild(meas);
-
-    const containerWidth =
-      twitchViewerCountDiv.clientWidth ||
-      twitchViewerCountDiv.offsetWidth ||
-      350;
-    const containerHeight =
-      twitchViewerCountDiv.clientHeight ||
-      twitchViewerCountDiv.offsetHeight ||
-      150;
-
-    const measuredWidth = meas.scrollWidth;
-    meas.style.width = `${containerWidth}px`;
-    const measuredHeight = meas.scrollHeight;
-
-    const scaleX = measuredWidth > 0 ? containerWidth / measuredWidth : 1;
-    const scaleY = measuredHeight > 0 ? containerHeight / measuredHeight : 1;
-    const scale = Math.min(scaleX, scaleY, 1);
-
-    const finalFontSize = Math.max(8, Math.floor(baseFontSize * scale));
-
-    twitchViewerCountHone.style.fontSize = `${finalFontSize}px`;
-    twitchViewerCountHone.style.lineHeight = "1.05";
-
-    document.body.removeChild(meas);
-  }
-
-  const adjustFontSizeToFitDebounced = debounce(adjustFontSizeToFit, 80);
-
-  if (window.ResizeObserver && twitchViewerCountDiv) {
     try {
-      const ro = new ResizeObserver(adjustFontSizeToFitDebounced);
-
-      ro.observe(twitchViewerCountDiv);
-      ro.observe(subDiv);
-    } catch (e) {
-      window.addEventListener("resize", adjustFontSizeToFitDebounced);
-    }
-  } else {
-    window.addEventListener("resize", adjustFontSizeToFitDebounced);
-  }
-
-  let animationStarted = false;
-  function startAnimationSequence() {
-    if (animationStarted) return;
-    animationStarted = true;
-
-    setTimeout(() => {
-      twitchViewerNumberTextToken();
-
       adjustFontSizeToFit();
 
-      subDiv.style.visibility = visible;
-      subDiv.style.opacity = oneNumber;
-      subDiv.style.animation = none;
-      subDiv.style.transition = transitionProperty;
+      await new Promise((r) => requestAnimationFrame(() => r()));
 
-      twitchLogoImgDiv.style.visibility = hidden;
-      twitchLogoImgDiv.style.opacity = zeroNumber;
-      twitchLogoImgDiv.style.animation = none;
-      twitchLogoImgDiv.style.transition = transitionProperty;
-
-      twitchViewerCountDiv.style.visibility = hidden;
-      twitchViewerCountDiv.style.opacity = zeroNumber;
-      twitchViewerCountDiv.style.animation = none;
-      twitchViewerCountDiv.style.transition = transitionProperty;
-
-      let animationPhase = 0;
-
-      function onLogoEnd(e) {
-        if (e && typeof e.preventDefault === "function") e.preventDefault();
-
-        if (animationPhase === 1) {
-          adjustFontSizeToFit();
-
-          twitchViewerCountDiv.style.visibility = visible;
-          twitchViewerCountDiv.style.opacity = oneNumber;
-          twitchViewerCountDiv.style.animation = animationFadeIn;
-          twitchViewerCountDiv.style.transition = transitionProperty;
-
-          animationPhase = 2;
-        } else if (animationPhase === 4) {
-          animationPhase = 5;
-
-          animateSubOut();
-        }
-      }
-
-      function onViewerEnd(e) {
-        if (e && typeof e.preventDefault === "function") e.preventDefault();
-
-        if (animationPhase === 2) {
-          setTimeout(() => {
-            twitchViewerCountDiv.style.opacity = zeroNumber;
-            twitchViewerCountDiv.style.animation = animationFadeOut;
-            twitchViewerCountDiv.style.transition = transitionProperty;
-            animationPhase = 3;
-          }, delay);
-        } else if (animationPhase === 3) {
-          twitchViewerCountDiv.style.visibility = hidden;
-          twitchViewerCountDiv.style.opacity = zeroNumber;
-          twitchViewerCountDiv.style.animation = none;
-          twitchViewerCountDiv.style.transition = none;
-
-          twitchLogoImgDiv.style.opacity = zeroNumber;
-          twitchLogoImgDiv.style.animation = animationFadeOut;
-          twitchLogoImgDiv.style.transition = transitionProperty;
-          animationPhase = 4;
-        }
-      }
-
-      function removeLogoViewerListeners() {
-        try {
-          twitchLogoImgDiv.removeEventListener("animationend", onLogoEnd);
-          twitchViewerCountDiv.removeEventListener("animationend", onViewerEnd);
-        } catch (e) {}
-      }
-
-      function animateSubIn() {
-        const anim = subDiv.animate(
-          [
-            {
-              opacity: 0,
-              transform: "scale(0.985) translateY(8px)",
-              filter: "blur(3px)",
-              offset: 0,
-            },
-            {
-              opacity: 1,
-              transform: "scale(1) translateY(0)",
-              filter: "blur(0px)",
-              offset: 1,
-            },
-          ],
+      subDiv.style.visibility = "visible";
+      await animateElement(
+        subDiv,
+        [
           {
-            duration: timer,
-            easing: "cubic-bezier(.2,.9,.2,1)",
-            fill: "forwards",
-          }
-        );
-
-        anim.onfinish = () => {
-          animationPhase = 1;
-
-          twitchLogoImgDiv.style.visibility = visible;
-          twitchLogoImgDiv.style.opacity = oneNumber;
-          twitchLogoImgDiv.style.animation = animationFadeIn;
-          twitchLogoImgDiv.style.transition = transitionProperty;
-        };
-      }
-
-      function animateSubOut() {
-        const anim = subDiv.animate(
-          [
-            {
-              opacity: 1,
-              transform: "scale(1) translateY(0)",
-              filter: "blur(0px)",
-              offset: 0,
-            },
-            {
-              opacity: 0,
-              transform: "scale(0.985) translateY(8px)",
-              filter: "blur(3px)",
-              offset: 1,
-            },
-          ],
+            opacity: 0,
+            transform: "scale(0.985) translateY(8px)",
+            filter: "blur(3px)",
+          },
           {
-            duration: timer,
-            easing: "cubic-bezier(.2,.9,.2,1)",
-            fill: "forwards",
-          }
-        );
+            opacity: 1,
+            transform: "scale(1) translateY(0)",
+            filter: "blur(0px)",
+          },
+        ],
+        { duration: 750, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
+      );
 
-        anim.onfinish = () => {
-          subDiv.style.visibility = hidden;
-          subDiv.style.opacity = zeroNumber;
-          subDiv.style.animation = none;
-          subDiv.style.transition = none;
-
-          removeLogoViewerListeners();
-          animationStarted = false;
-        };
-      }
-
-      twitchLogoImgDiv.addEventListener("animationend", onLogoEnd);
-      twitchViewerCountDiv.addEventListener("animationend", onViewerEnd);
-
-      [twitchLogoImgDiv, twitchViewerCountDiv].forEach((el) => {
-        el.addEventListener("animationcancel", (ev) => {
-          ev.preventDefault();
-          el.style.visibility = visible;
-          el.style.opacity = oneNumber;
-          el.style.animation = none;
-          el.style.transition = none;
-        });
+      twitchLogoImgDiv.style.visibility = "visible";
+      await animateElement(twitchLogoImgDiv, [{ opacity: 0 }, { opacity: 1 }], {
+        duration: 375,
+        easing: "cubic-bezier(.2,.9,.2,1)",
+        fill: "forwards",
       });
 
-      animationPhase = 0;
-      animateSubIn();
-    }, initialDelay);
-  }
-
-  function twitchViewerNumberTextToken() {
-    if (viewerNumber) {
-      twitchViewerCountHone.textContent = "Viewer:";
-      twitchViewerCountHone.appendChild(document.createElement("br"));
-      twitchViewerCountHone.appendChild(
-        document.createTextNode(String(viewerNumber))
+      twitchViewerCountDiv.style.visibility = "visible";
+      await animateElement(
+        twitchViewerCountDiv,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: 375, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
       );
-      twitchViewerCountHone.classList.add("text-underline");
-      adjustFontSizeToFitDebounced();
+
+      await new Promise((r) => setTimeout(r, Math.max(0, delay)));
+
+      await animateElement(
+        twitchViewerCountDiv,
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 375, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
+      );
+      twitchViewerCountDiv.style.visibility = "hidden";
+
+      await animateElement(twitchLogoImgDiv, [{ opacity: 1 }, { opacity: 0 }], {
+        duration: 375,
+        easing: "cubic-bezier(.2,.9,.2,1)",
+        fill: "forwards",
+      });
+      twitchLogoImgDiv.style.visibility = "hidden";
+
+      await animateElement(
+        subDiv,
+        [
+          {
+            opacity: 1,
+            transform: "scale(1) translateY(0)",
+            filter: "blur(0px)",
+          },
+          {
+            opacity: 0,
+            transform: "scale(0.985) translateY(8px)",
+            filter: "blur(3px)",
+          },
+        ],
+        { duration: 750, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
+      );
+
+      subDiv.style.visibility = "hidden";
+    } catch (e) {
+      console.warn("Animation sequence failed:", e);
+
+      try {
+        [twitchViewerCountDiv, twitchLogoImgDiv, subDiv].forEach((el) => {
+          el.style.visibility = "hidden";
+          el.style.opacity = 0;
+          el.style.animation = "none";
+          el.style.transition = "none";
+        });
+      } catch {}
+    } finally {
+      animationRunning = false;
     }
   }
 
-  function htmlElementsSecurityToken() {
-    const elementArray = [
-      mainDiv,
-      twitchLogoImgDiv,
-      twitchImgLogo,
-      twitchViewerCountDiv,
-      twitchViewerCountHone,
-    ];
-    const eventArray = ["copy", "dragstart", "keydown", "select"];
+  function setViewerText(value) {
+    const str = value == null ? "" : String(value);
+    twitchViewerCountHone.textContent = "";
 
-    const dataStyle = {
-      fontFamily: robotoBold,
-      border: cssBorder || `1px solid ${cssBorderColor}`,
-      WebkitUserSelect: "none",
-      userSelect: "none",
-      cursor: "default",
-      pointerEvents: "none",
-    };
+    twitchViewerCountHone.appendChild(document.createTextNode("Viewer:"));
+    twitchViewerCountHone.appendChild(document.createElement("br"));
+    twitchViewerCountHone.appendChild(document.createTextNode(str));
+    twitchViewerCountHone.classList.add("text-underline");
 
-    const changeDataStyle = {
-      fontFamily: robotoBold,
-      border: "2px solid rgb(0, 0, 0)",
-      WebkitUserSelect: "none",
-      userSelect: "none",
-      cursor: "default",
-      pointerEvents: "none",
-    };
-
-    elementArray.forEach((element) => {
-      if (!element) return;
-      eventArray.forEach((event) =>
-        element.addEventListener(event, (e) => e.preventDefault())
-      );
-      if (dataStyle) Object.assign(element.style, dataStyle);
-    });
-
-    eventArray.forEach((event) =>
-      subDiv.addEventListener(event, (e) => e.preventDefault())
-    );
-    if (changeDataStyle) Object.assign(subDiv.style, changeDataStyle);
+    adjustFontSizeToFitDebounced();
   }
 
-  window.updateViewerNumber = function (num) {
+  async function updateViewerNumber(num) {
     if (num == null) return;
 
-    viewerNumber = String(num);
-    twitchViewerNumberTextToken();
-    startAnimationSequence();
-  };
+    const safe = typeof num === "number" ? Math.floor(num) : String(num);
+    viewerNumber = String(safe);
+
+    setViewerText(viewerNumber);
+
+    setTimeout(() => {
+      runAnimationSequence().catch((e) => console.warn(e));
+    }, Math.max(0, initialDelay));
+  }
 
   function findViewerNumberInObject(obj) {
     if (!obj || typeof obj !== "object") return null;
@@ -426,6 +415,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return null;
   }
 
+  window.updateViewerNumber = updateViewerNumber;
+
   if (client && typeof client.on === "function") {
     try {
       client.on("*", (data) => {
@@ -435,7 +426,7 @@ document.addEventListener("DOMContentLoaded", () => {
             findViewerNumberInObject(data?.payload) ||
             findViewerNumberInObject(data?.data);
           if (maybe != null) {
-            window.updateViewerNumber(maybe);
+            updateViewerNumber(maybe);
           }
         } catch (err) {
           console.error(
@@ -449,10 +440,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  twitchViewerNumberTextToken();
-  htmlElementsSecurityToken();
-
-  if (viewerNumber) {
-    startAnimationSequence();
+  if (viewerNumber != null) {
+    updateViewerNumber(viewerNumber);
+  } else {
+    twitchViewerCountHone.textContent = "";
+    twitchViewerCountHone.classList.remove("text-underline");
   }
 });
