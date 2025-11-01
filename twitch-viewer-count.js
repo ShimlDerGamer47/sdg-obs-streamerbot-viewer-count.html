@@ -86,19 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const twitchViewerCountDiv = $("twitchViewerCountContainerId");
   const twitchViewerCountHone = $("twitchViewerCountId");
 
-  twitchImgLogo.width = "";
-  twitchImgLogo.height = "";
-  twitchImgLogo.src = "";
-  twitchImgLogo.alt = "";
-  twitchImgLogo.classList.remove("twitch-img-logo");
-
-  twitchImgLogo.width = "462";
-  twitchImgLogo.height = "540";
-  twitchImgLogo.src = "/IMG Ordner/Logo IMG Ordner/Twitch Logo Icon.png";
-  twitchImgLogo.alt = "Twitch Logo Icon";
-  if (!twitchImgLogo.classList.contains("twitch-img-logo"))
-    twitchImgLogo.classList.add("twitch-img-logo");
-
   twitchViewerCountHone.innerText = "";
   twitchViewerCountHone.classList.remove("text-underline");
 
