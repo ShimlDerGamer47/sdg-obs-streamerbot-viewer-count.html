@@ -14,21 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ? parseInt(params.get("initialDelay"), 10)
     : 500;
 
-  let client = null;
-  try {
-    if (typeof StreamerbotClient !== "undefined") {
-      client = new StreamerbotClient({
-        host: "127.0.0.1",
-        port: 8080,
-        endpoint: "/",
-        subscribe: {},
-      });
-    }
-  } catch (error) {
-    console.warn("Streamer.bot-Client nicht verfügbar:", error);
-    client = null;
-  }
-
   const fontFamilyVar = "--font-family-var";
   const robotoBold = getComputedStyle(html)
     .getPropertyValue(fontFamilyVar)
@@ -70,7 +55,6 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error(
       "Required DOM elements missing. Aborting viewer count script."
     );
-
     return;
   }
 
@@ -99,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       eventArray.forEach((event) => {
         if (!event) return;
-
         element.addEventListener(event, (e) => e.preventDefault());
       });
 
@@ -116,7 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     eventArray.forEach((event) => {
       if (!event) return;
-
       subDiv.addEventListener(event, (e) => e.preventDefault());
     });
 
@@ -124,7 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   htmlSecurityToken();
 
-  function noop() {}
   function debounce(fn, wait = 80) {
     let t;
     return (...args) => {
@@ -136,7 +117,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function getBaseFontSizePx(el) {
     const fs = getComputedStyle(el).fontSize;
     const n = parseFloat(fs);
-
     return Number.isFinite(n) ? n : 50;
   }
 
@@ -207,7 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.ResizeObserver) {
     try {
       const ro = new ResizeObserver(adjustFontSizeToFitDebounced);
-
       ro.observe(twitchViewerCountDiv);
       ro.observe(subDiv);
     } catch (e) {
@@ -255,16 +234,13 @@ document.addEventListener("DOMContentLoaded", () => {
         anim.onfinish = () => {
           if (options && options.fill === "forwards" && keyframes.length > 0) {
             const last = keyframes[keyframes.length - 1];
-
             Object.assign(el.style, last);
           }
           resolve();
         };
 
         setTimeout(
-          () => {
-            resolve();
-          },
+          () => resolve(),
           options && options.duration ? options.duration + 40 : 300
         );
       } catch (e) {
@@ -274,7 +250,6 @@ document.addEventListener("DOMContentLoaded", () => {
             Object.assign(el.style, last);
           } catch (__) {}
         }
-
         setTimeout(resolve, 40);
       }
     });
@@ -286,7 +261,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       adjustFontSizeToFit();
-
       await new Promise((r) => requestAnimationFrame(() => r()));
 
       subDiv.style.visibility = "visible";
@@ -309,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       twitchLogoImgDiv.style.visibility = "visible";
       await animateElement(twitchLogoImgDiv, [{ opacity: 0 }, { opacity: 1 }], {
-        duration: 375,
+        duration: 750,
         easing: "cubic-bezier(.2,.9,.2,1)",
         fill: "forwards",
       });
@@ -318,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
       await animateElement(
         twitchViewerCountDiv,
         [{ opacity: 0 }, { opacity: 1 }],
-        { duration: 375, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
+        { duration: 750, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
       );
 
       await new Promise((r) => setTimeout(r, Math.max(0, delay)));
@@ -326,12 +300,12 @@ document.addEventListener("DOMContentLoaded", () => {
       await animateElement(
         twitchViewerCountDiv,
         [{ opacity: 1 }, { opacity: 0 }],
-        { duration: 375, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
+        { duration: 750, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
       );
       twitchViewerCountDiv.style.visibility = "hidden";
 
       await animateElement(twitchLogoImgDiv, [{ opacity: 1 }, { opacity: 0 }], {
-        duration: 375,
+        duration: 750,
         easing: "cubic-bezier(.2,.9,.2,1)",
         fill: "forwards",
       });
@@ -353,11 +327,9 @@ document.addEventListener("DOMContentLoaded", () => {
         ],
         { duration: 750, easing: "cubic-bezier(.2,.9,.2,1)", fill: "forwards" }
       );
-
       subDiv.style.visibility = "hidden";
     } catch (e) {
       console.warn("Animation sequence failed:", e);
-
       try {
         [twitchViewerCountDiv, twitchLogoImgDiv, subDiv].forEach((el) => {
           el.style.visibility = "hidden";
@@ -396,49 +368,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, Math.max(0, initialDelay));
   }
 
-  function findViewerNumberInObject(obj) {
-    if (!obj || typeof obj !== "object") return null;
-    for (const k of Object.keys(obj)) {
-      const v = obj[k];
-      if (v == null) continue;
-      if (
-        /viewer|viewers|viewerCount|viewerNumber|views/i.test(k) &&
-        (typeof v === "number" || /^\d+$/.test(String(v)))
-      ) {
-        return Number(v);
-      }
-      if (typeof v === "object") {
-        const res = findViewerNumberInObject(v);
-        if (res != null) return res;
-      }
-    }
-    return null;
-  }
-
   window.updateViewerNumber = updateViewerNumber;
-
-  if (client && typeof client.on === "function") {
-    try {
-      client.on("*", (data) => {
-        try {
-          const maybe =
-            findViewerNumberInObject(data) ||
-            findViewerNumberInObject(data?.payload) ||
-            findViewerNumberInObject(data?.data);
-          if (maybe != null) {
-            updateViewerNumber(maybe);
-          }
-        } catch (err) {
-          console.error(
-            "Fehler beim Auswerten eines Streamer.bot Events:",
-            err
-          );
-        }
-      });
-    } catch (err) {
-      console.warn("Fehler beim Registrieren des Streamer.bot Listeners:", err);
-    }
-  }
 
   if (viewerNumber != null) {
     updateViewerNumber(viewerNumber);
